@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+set -xeuo pipefail
+
+# cargo install cargo-watch https
+
+cleanup() {
+	local pids
+	read -r -a pids <<EOF
+$(jobs -p)
+EOF
+	echo "pids=${pids[*]}"
+	if [ "${#pids[@]}" -eq 0 ]; then
+		kill -- "${pids[@]/#/-}"
+	fi
+}
+trap 'cleanup' EXIT
+
+cargo doc --all-features # init target/doc
+http -a 127.0.0.1 -p 8080 target/doc &
+cargo watch -s 'cargo doc --all-features'
